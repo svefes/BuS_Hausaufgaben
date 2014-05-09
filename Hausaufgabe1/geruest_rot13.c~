@@ -1,0 +1,91 @@
+/*
+ * Füge hier die Header hinzu
+ * schau dir dafür die man pages an.
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+
+void print_rot13(unsigned char zeichen) {
+	if(zeichen >= 65 && zeichen <= 90) //Grossbuchstaben
+	{
+		zeichen = zeichen + 13;
+		
+		if(zeichen > 90)
+		{
+			zeichen = zeichen - 26;
+		}
+	}
+	else if(zeichen >= 97 && zeichen <= 122) //Kleinbuchstaben
+	{
+		zeichen = zeichen + 13;		
+		if(zeichen > 122)
+		{
+			zeichen = zeichen - 26;
+		}
+	}
+	else 									//Sonderzeichen
+	{
+		
+	}
+
+	printf("%c", zeichen);
+}
+
+
+/*
+ * Dies ist die main Methode
+ */
+int main(int argc, char* argv[]) {
+    /*
+     * Deklarier deine benötigten Variablen
+     */
+ 	int fh;
+	unsigned char puffer;
+
+
+    /*
+     * Vergiss nicht die command line zu prüfen
+     */
+	if(argc != 2)
+	{
+		printf("Bitte rufen Sie das Programm so auf: PROGRAMMNAME dateipfad\n");
+		exit(0);
+	}
+    
+
+    /*
+     * Öffne die Datei und ließ sie ein,
+     * gib den Inhalt auf dem Bildschirm aus.
+     * Vergiss nicht Fehlerfälle abzufangen.
+     */
+	fh = open(argv[1], O_RDONLY);
+	if(fh != -1)
+	{
+		while(read(fh, &puffer, sizeof(puffer)))
+		{
+			print_rot13(puffer);
+		}
+		printf("\n\n\nDie Datei %s wurde erfolgreich entschlüsselt.\n", argv[1]);
+		close(fh);
+	}
+	else
+	{
+		printf("%s\n", strerror(errno));
+		exit(0);
+	}
+    
+    
+    /*
+     * Beende das Program sorgfältig.
+     */
+	return 0;
+    
+}
+
+

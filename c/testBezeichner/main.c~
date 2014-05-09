@@ -1,0 +1,9 @@
+#include <stdio.h>
+void main(){
+	int **test;
+	int a = 1;
+	int b = 2;
+	
+	*test = &a;
+	printf("%d", *test);
+}
