@@ -50,7 +50,8 @@ void enqueue(stud_type** studenten_liste, int matnum, char vorname[20], char nac
     /* Füg den neuen Eintrag in die Liste ein */
     /* Ist die Liste leer ? */
     /* Sortier den Studenten aufsteigend nach Matrikelnummer ein */
-	curr = *studenten_liste;	
+    curr = *studenten_liste;
+    prev = NULL;
 
 	while((curr != NULL) && (curr->matnum < matnum))
 	{
@@ -95,7 +96,7 @@ void enqueue(stud_type** studenten_liste, int matnum, char vorname[20], char nac
 int dequeue(stud_type** studenten_liste, int matnum)
 {
     /* Deklariere benštigte Variablen */
-    	stud_type *curr, *prev;
+    stud_type *curr, *prev;
 	curr = *studenten_liste;
 
     /* PrŸfe Randbedingungen */
@@ -165,12 +166,14 @@ sort_type** sortiere_liste(stud_type** studenten_liste, int (*compare)(stud_type
 {
 	stud_type *curr;
 	sort_type **sorted_list;
+    
+    sorted_list = NULL;
 	
-	if(is_empty(studenten_liste))
+	if(studenten_liste == NULL)
 	{
 		return NULL;
 	}
-	
+    
 	curr = *studenten_liste;
 	while(curr != NULL)
 	{
@@ -237,16 +240,18 @@ sort_type** sortiere_liste(stud_type** studenten_liste, int (*compare)(stud_type
 		}
 		curr = curr->next_student;
 	}
+    
 	return sorted_list;
 }
 
 void print_sorted_list(sort_type** liste)
 {
-	sort_type *tmp = *liste;
-	
+	sort_type *tmp;
+    tmp = *liste;
 	while(tmp != NULL)
 	{
-		printf("Matnum: %d, Vorname: %s, Nachname %s\n", tmp->content->matnum, tmp->content->vorname, tmp->content->nachname);
+		printf("Matnum: %d, Vorname: %s, Nachname %s\n", tmp->content->matnum,
+               tmp->content->vorname, tmp->content->nachname);
 		tmp = tmp->next_sort;
 	}
 }
@@ -433,6 +438,7 @@ int main()
 			   curr->matnum, curr->vorname, curr->nachname);
         curr = curr->next_student;
     }
+    
 	printf(">>> Fuege neuen Studenten in die Liste ein: Sven Festag [330723] ...\n");
     enqueue(&studenten_liste, 330723, "Sven", "Festag");
     printf(">>> Fuege neuen Studenten in die Liste ein: Simon Glimm [335266] ...\n");
@@ -440,10 +446,7 @@ int main()
     printf(">>> Fuege neuen Studenten in die Liste ein: Nicola Gatto [334836] ...\n");
     enqueue(&studenten_liste, 334836, "Nicola", "Gatto");
     
-    
-	
-	printf(">>> Sortiere nach Vornamen und gebe aus...\n");
-	sort_type** my_sort;	
+	sort_type** my_sort;
 	my_sort = sortiere_liste(&studenten_liste, sortiere_vorname);
 	print_sorted_list(my_sort);
 	
@@ -452,7 +455,7 @@ int main()
 	print_sorted_list(my_sort);
 	
 	printf(">>> Elemente werden in die in eine Datei gespeichert...\n");
-	save(&studenten_liste);
+	//save(&studenten_liste);
 	
 
     return 0;
