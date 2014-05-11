@@ -333,7 +333,7 @@ void save(stud_type** studenten_liste)
 	int fh;
 	char puffer[100];
 	
-	fh = open("studenten_liste.saved", O_WRONLY | S_IRWXU | O_TRUNC | O_CREAT);
+	fh = open("studenten_liste.dat", O_RDWR | O_TRUNC | O_CREAT, S_IRWXU);
 	if(fh != -1)
 	{
 		stud_type *tmp;
@@ -341,14 +341,20 @@ void save(stud_type** studenten_liste)
 		
 		while(tmp != NULL)
 		{
-			sprintf(puffer, "%d", tmp->matnum);
+			/*sprintf(puffer, "%d", tmp->matnum);
 			strcat(puffer, ";;");
 			strcat(puffer, tmp->vorname);
 			strcat(puffer, ";;");
 			strcat(puffer, tmp->nachname);
 			strcat(puffer, ";;\n");
+						
+			if(write(fh, &puffer, sizeof(char[100])) == -1)
+			{
+				printf("Achtung! Matrikelnummer: %d konnte nicht gespeichert werden.\n", tmp->matnum);
+				printf("%s\n", strerror(errno));
+			}*/
 			
-			if(write(fh, &puffer, sizeof(puffer)) == -1)
+			if(write(fh, tmp, sizeof(*tmp)) == -1)
 			{
 				printf("Achtung! Matrikelnummer: %d konnte nicht gespeichert werden.\n", tmp->matnum);
 				printf("%s\n", strerror(errno));
@@ -368,6 +374,34 @@ void save(stud_type** studenten_liste)
 	}
 }
 
+void load(stud_type** studenten_liste)
+{
+	int fh, matnum;
+	char vorname[20], nachname[20];
+	stud_type puffer;
+	
+	fh = open("studenten_liste.dat", O_RDONLY);
+	
+	if(fh != -1)
+	{
+		while(read(fh, &puffer, sizeof(puffer)))
+		{
+			matnum = puffer.matnum;
+			strcpy(vorname, puffer.vorname);
+			strcpy(nachname, puffer.nachname);
+			enqueue(studenten_liste, matnum, vorname, nachname);
+		}
+	}
+	else
+	{
+		printf("%s\n", strerror(errno));
+	}
+	
+	if(close(fh) == -1)
+	{
+		printf("%s\n", strerror(errno));
+	}
+}
 /* Test der Listenfunktionen  */
 int main()                                     
 {
@@ -379,83 +413,102 @@ int main()
     char nachname[20];
     /* zeiger fŸr iteration */
     stud_type *curr;
+    int fh;
+	fh = open("studenten_liste.dat", O_RDONLY);
 
-    printf(">>> Fuege neuen Studenten in die Liste ein: Bill Clinton [6666] ...\n");
-    enqueue(&studenten_liste, 6666, "Bill", "Clinton");
-    printf(">>> Fuege neuen Studenten in die Liste ein: Hillary Clinton [4711] ...\n");
-    enqueue(&studenten_liste, 4711, "Hillary", "Clinton");
-    printf(">>> Fuege neuen Studenten in die Liste ein: Newt Gingrich [9999] ...\n");
-    enqueue(&studenten_liste, 9999, "Newt", "Gingrich");
-    printf(">>> Test, ob die Matrikelnummer 0815 bereits erfasst wurde ...\n");
+    if(fh == -1)
+    {
+    	printf(">>> Fuege neuen Studenten in die Liste ein: Bill Clinton [6666] ...\n");
+		enqueue(&studenten_liste, 6666, "Bill", "Clinton");
+		printf(">>> Fuege neuen Studenten in die Liste ein: Hillary Clinton [4711] ...\n");
+		enqueue(&studenten_liste, 4711, "Hillary", "Clinton");
+		printf(">>> Fuege neuen Studenten in die Liste ein: Newt Gingrich [9999] ...\n");
+		enqueue(&studenten_liste, 9999, "Newt", "Gingrich");
+		printf(">>> Test, ob die Matrikelnummer 0815 bereits erfasst wurde ...\n");
 
-    if (get_student(studenten_liste, 815, vorname, nachname))
-        printf("    Matrikelnummer %4i: %s %s\n", 815, vorname, nachname);
-    else
-        printf("    Matrikelnummer %4i ist unbekannt\n", 815);
+		if (get_student(studenten_liste, 815, vorname, nachname))
+		    printf("    Matrikelnummer %4i: %s %s\n", 815, vorname, nachname);
+		else
+		    printf("    Matrikelnummer %4i ist unbekannt\n", 815);
 
-    printf(">>> Fuege neuen Studenten in die Liste ein: Monica Lewinsky [0815] ...\n");
-    enqueue(&studenten_liste, 815, "Monica", "Lewinsky");
-    printf(">>> Loesche die Matrikelnummer 4711 ...\n");
+		printf(">>> Fuege neuen Studenten in die Liste ein: Monica Lewinsky [0815] ...\n");
+		enqueue(&studenten_liste, 815, "Monica", "Lewinsky");
+		printf(">>> Loesche die Matrikelnummer 4711 ...\n");
 
-    if (dequeue(&studenten_liste, 4711))
-        printf("    Matrikelnummer %4i geloescht\n", 4711);
-    else
-        printf("    Matrikelnummer %4i war nicht erfasst\n", 4711);
+		if (dequeue(&studenten_liste, 4711))
+		    printf("    Matrikelnummer %4i geloescht\n", 4711);
+		else
+		    printf("    Matrikelnummer %4i war nicht erfasst\n", 4711);
 
-    printf(">>> Test ob die Studentenliste leer ist ...\n");
+		printf(">>> Test ob die Studentenliste leer ist ...\n");
 
-    if (is_empty(&studenten_liste))
-        printf("    Die Studentenliste ist leer \n");
-    else
-        printf("    Die Studentenliste ist nicht leer \n");
+		if (is_empty(&studenten_liste))
+		    printf("    Die Studentenliste ist leer \n");
+		else
+		    printf("    Die Studentenliste ist nicht leer \n");
 
-    printf(">>> Test, ob die Matrikelnummer 6666 bereits erfasst wurde ...\n");
+		printf(">>> Test, ob die Matrikelnummer 6666 bereits erfasst wurde ...\n");
 
-    if (get_student(studenten_liste, 6666, vorname, nachname))
-        printf("    Matrikelnummer %4i: %s %s\n", 6666, vorname, nachname);
-    else
-        printf("    Matrikelnummer %4i ist unbekannt\n", 6666);
- 
-    printf(">>> Loesche die Matrikelnummer 9998 ...\n");
- 
-    if (dequeue(&studenten_liste, 9998))
-        printf("    Matrikelnummer %4i geloescht\n", 9998);
-    else
-        printf("    Matrikelnummer %4i war nicht erfasst\n", 9998);
+		if (get_student(studenten_liste, 6666, vorname, nachname))
+		    printf("    Matrikelnummer %4i: %s %s\n", 6666, vorname, nachname);
+		else
+		    printf("    Matrikelnummer %4i ist unbekannt\n", 6666);
+	 
+		printf(">>> Loesche die Matrikelnummer 9998 ...\n");
+	 
+		if (dequeue(&studenten_liste, 9998))
+		    printf("    Matrikelnummer %4i geloescht\n", 9998);
+		else
+		    printf("    Matrikelnummer %4i war nicht erfasst\n", 9998);
 
-    printf(">>> Loesche die Matrikelnummer 9999 ...\n");
+		printf(">>> Loesche die Matrikelnummer 9999 ...\n");
 
-    if (dequeue(&studenten_liste, 9999))
-        printf("    Matrikelnummer %4i geloescht\n", 9999);
-    else
-        printf("    Matrikelnummer %4i war nicht erfasst\n", 9999);
+		if (dequeue(&studenten_liste, 9999))
+		    printf("    Matrikelnummer %4i geloescht\n", 9999);
+		else
+		    printf("    Matrikelnummer %4i war nicht erfasst\n", 9999);
 
-    printf(">>> Gebe alle erfassten Studenten aus ...\n");
-    curr = studenten_liste;
+		printf(">>> Gebe alle erfassten Studenten aus ...\n");
+		curr = studenten_liste;
 
-    while (curr != NULL) {
-        printf("    Matrikelnummer %4i: %s %s\n", 
-			   curr->matnum, curr->vorname, curr->nachname);
-        curr = curr->next_student;
-    }
-    
-	printf(">>> Fuege neuen Studenten in die Liste ein: Sven Festag [330723] ...\n");
-    enqueue(&studenten_liste, 330723, "Sven", "Festag");
-    printf(">>> Fuege neuen Studenten in die Liste ein: Simon Glimm [335266] ...\n");
-    enqueue(&studenten_liste, 335266, "Simon", "Glimm");
-    printf(">>> Fuege neuen Studenten in die Liste ein: Nicola Gatto [334836] ...\n");
-    enqueue(&studenten_liste, 334836, "Nicola", "Gatto");
-    
-	sort_type** my_sort;
-	my_sort = sortiere_liste(&studenten_liste, sortiere_vorname);
-	print_sorted_list(my_sort);
+		while (curr != NULL) {
+		    printf("    Matrikelnummer %4i: %s %s\n", 
+				   curr->matnum, curr->vorname, curr->nachname);
+		    curr = curr->next_student;
+		}
+		
+		printf(">>> Fuege neuen Studenten in die Liste ein: Sven Festag [330723] ...\n");
+		enqueue(&studenten_liste, 330723, "Sven", "Festag");
+		printf(">>> Fuege neuen Studenten in die Liste ein: Simon Glimm [335266] ...\n");
+		enqueue(&studenten_liste, 335266, "Simon", "Glimm");
+		printf(">>> Fuege neuen Studenten in die Liste ein: Nicola Gatto [334836] ...\n");
+		enqueue(&studenten_liste, 334836, "Nicola", "Gatto");
+		
+		sort_type** my_sort;
+		my_sort = sortiere_liste(&studenten_liste, sortiere_vorname);
+		print_sorted_list(my_sort);
 	
-	printf(">>> Sortiere nach Nachnamen und gebe aus...\n");
-	my_sort = sortiere_liste(&studenten_liste, sortiere_nachname);
-	print_sorted_list(my_sort);
+		printf(">>> Sortiere nach Nachnamen und gebe aus...\n");
+		my_sort = sortiere_liste(&studenten_liste, sortiere_nachname);
+		print_sorted_list(my_sort);
 	
-	printf(">>> Elemente werden in die in eine Datei gespeichert...\n");
-	//save(&studenten_liste);
+		printf(">>> Elemente werden in die in eine Datei gespeichert...\n");
+		save(&studenten_liste);
+	}
+	else
+	{
+		close(fh);
+		printf("Loading File gefunden. Lese ein...\n");
+		load(&studenten_liste);
+		
+		printf(">>> Gebe alle erfassten Studenten aus ...\n");
+		curr = studenten_liste;
+		while (curr != NULL) {
+		    printf("    Matrikelnummer %4i: %s %s\n", 
+				   curr->matnum, curr->vorname, curr->nachname);
+		    curr = curr->next_student;
+		}
+	}
 	
 
     return 0;
