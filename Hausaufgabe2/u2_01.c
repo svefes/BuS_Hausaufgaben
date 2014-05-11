@@ -38,7 +38,19 @@ void enqueue(stud_type** studenten_liste, int matnum, char vorname[20], char nac
     stud_type *curr, *prev;
 
     /* Hol Speicher auf dem Heap an für den neuen Listen Eintrag */
-	stud_type *zeiger = (stud_type*) malloc(sizeof(stud_type));     
+	stud_type *zeiger = (stud_type*) malloc(sizeof(stud_type));
+	
+	if(zeiger == NULL)
+    {
+    	printf("%s\n", strerror(errno));
+    	return;
+    }     
+    
+    if(zeiger == NULL)
+    {
+    	printf("%s\n", strerror(errno));
+    	return;
+    }
     
     /* Befüll den Speicher */
      	//Anlegen des neuen Eintrags
@@ -181,6 +193,13 @@ sort_type** sortiere_liste(stud_type** studenten_liste, int (*compare)(stud_type
 		{
 			//Erstelle erstes Listenelement
 			sort_type *first_element = (sort_type*) malloc(sizeof(sort_type));
+			
+			if(first_element == NULL)
+    		{
+    			printf("%s\n", strerror(errno));
+    			return NULL;
+    		}
+			
 			sorted_list = &first_element;
 			first_element->content = curr;
 			first_element->next_sort = NULL;
@@ -188,6 +207,13 @@ sort_type** sortiere_liste(stud_type** studenten_liste, int (*compare)(stud_type
 		else
 		{
 			sort_type *zeiger = (sort_type*) malloc(sizeof(sort_type));
+			
+			if(zeiger == NULL)
+    		{
+    			printf("%s\n", strerror(errno));
+    			return NULL;
+    		}
+			
 			zeiger->content = curr;
 			zeiger->next_sort = NULL;
 			
@@ -331,7 +357,6 @@ int sortiere_nachname(stud_type* a, stud_type* b)
 void save(stud_type** studenten_liste)
 {
 	int fh;
-	char puffer[100];
 	
 	fh = open("studenten_liste.dat", O_RDWR | O_TRUNC | O_CREAT, S_IRWXU);
 	if(fh != -1)
@@ -473,14 +498,23 @@ int main()
 		
 		sort_type** my_sort;
 		my_sort = sortiere_liste(&studenten_liste, sortiere_vorname);
-		print_sorted_list(my_sort);
+		
+		if(my_sort != NULL)
+		{
+			print_sorted_list(my_sort);
+		}
 	
 		printf(">>> Sortiere nach Nachnamen und gebe aus...\n");
 		my_sort = sortiere_liste(&studenten_liste, sortiere_nachname);
-		print_sorted_list(my_sort);
-	
-		printf(">>> Elemente werden in die in eine Datei gespeichert...\n");
+		
+		if(my_sort != NULL)
+		{
+			print_sorted_list(my_sort);
+		}
+		
+		printf(">>> Elemente werden in eine Datei gespeichert...\n");
 		save(&studenten_liste);
+		printf("...Abgeschlossen\n");
 	}
 	else
 	{
