@@ -340,20 +340,7 @@ void save(stud_type** studenten_liste)
 		tmp = *studenten_liste;
 		
 		while(tmp != NULL)
-		{
-			/*sprintf(puffer, "%d", tmp->matnum);
-			strcat(puffer, ";;");
-			strcat(puffer, tmp->vorname);
-			strcat(puffer, ";;");
-			strcat(puffer, tmp->nachname);
-			strcat(puffer, ";;\n");
-						
-			if(write(fh, &puffer, sizeof(char[100])) == -1)
-			{
-				printf("Achtung! Matrikelnummer: %d konnte nicht gespeichert werden.\n", tmp->matnum);
-				printf("%s\n", strerror(errno));
-			}*/
-			
+		{	
 			if(write(fh, tmp, sizeof(*tmp)) == -1)
 			{
 				printf("Achtung! Matrikelnummer: %d konnte nicht gespeichert werden.\n", tmp->matnum);
