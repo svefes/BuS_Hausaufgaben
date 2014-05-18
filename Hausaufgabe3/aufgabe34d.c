@@ -47,7 +47,6 @@ int main(void)
 		{
 			srand(time(NULL));
 			wait_time = (rand() %401) + 100;
-			printf("%d\n",wait_time);
 			usleep(wait_time * 1000);
 		}
 	}
