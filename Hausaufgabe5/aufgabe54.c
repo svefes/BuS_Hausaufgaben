@@ -32,11 +32,12 @@ void signal_handler(int signalNum) {
 
 int main(int argc, char **argv)
 {
-    int id, i;   /* "id" fuer das Shared Memory Segment
+    int id, shm_sem_id,  i;   /* "id" fuer das Shared Memory Segment
                   mit "*shar_mem" kann der im Shared Memory
-                  gespeicherte Wert veraendert werden     */
+                  gespeicherte Wert veraenderts werden     */
     struct nightclub_s* shar_mem;
     pid_t f_pid;    /* the pid after fork */
+   	sem_t* shm_sem;
     
     /* Nun wird das Shared Memory Segment angefordert, an den Prozess
      angehaengt, und auf 0 gesetzt */
@@ -59,6 +60,14 @@ int main(int argc, char **argv)
      * sie sichert nicht den gemeinsamen Speicherbereich (shar_mem), dazu benötigen Sie eine 2. unbenannte
      * Semaphore, die sie noch anlegen müssen.
      */
+     
+	shm_sem_id = shmget(IPC_PRIVATE, sizeof(sem_t), IPC_CREAT|0644);
+	shm_sem = (sem_t*)shmat(shm_sem_id, 0, 0);
+	memset(shm_sem, 0, sizeof(sem_t));
+	
+	sem_init(&shar_mem->free_space_inside, 1, MAX_CUSTOMERS);
+	sem_init(shm_sem, 1, 1);
+     
     
     /* initialize random number generator */
     srand(time(NULL));
@@ -77,7 +86,9 @@ int main(int argc, char **argv)
             }
             
             /* enque customer in line */
+            sem_wait(shm_sem);
             shar_mem->customers_in_queue++;
+            sem_post(shm_sem);
             
             /* create the new customer */
             f_pid = fork();
@@ -91,22 +102,32 @@ int main(int argc, char **argv)
                 /* Andere Zufallszahlen als der Vater bitte! */
                 srand(time(NULL));
                 
-                if(/* nach 2 Sekunden immer noch nicht im Club, hier muss also noch eine passende Bedingung hin */0)
+                tv.tv_sec = time(NULL) + 2;
+                
+                
+                //TODO Gucken Zugriff auf shared memory
+                if(sem_timedwait(&shar_mem->free_space_inside, &tv) != 0)
                 {
                     printf("%d: That takes too long, I leave\n", getpid());
                     
                     /* Lösche unsere PID, denn wir beenden uns jetzt */
                     for(i = 0; i < MAX_PROCESSES; i++) {
                         if(shar_mem->pid[i] == getpid()) {
+                        	sem_wait(shm_sem);
                             shar_mem->pid[i] = -1;
+                            sem_post(shm_sem);
                             break;
                         }
                     }
                     /* Und aus der Queue raus! */
+                    sem_wait(shm_sem);
                     shar_mem->customers_in_queue--;
+                    sem_post(shm_sem);
                 }else {
                     /* Wir sind drinn, also Warteschlange verlassen */
+                    sem_wait(shm_sem);
                     shar_mem->customers_in_queue--;
+                    sem_post(shm_sem);
                     
                     /* Jetzt ist hier Party angesagt */
                     printf("%d: PARTY PARTY\n", getpid());
@@ -116,16 +137,22 @@ int main(int argc, char **argv)
                     /* Lösche unsere PID, denn wir beenden uns jetzt */
                     for(i = 0; i < MAX_PROCESSES; i++) {
                         if(shar_mem->pid[i] == getpid()) {
+                            sem_wait(shm_sem);
                             shar_mem->pid[i] = -1;
+                            sem_post(shm_sem);
                             break;
                         }
                     }
+                    
+                    sem_post(&shar_mem->free_space_inside);
                 }
                 /* und jetzt beenden wir das Kind */
                 exit(0);
             }else {
                 /* Das ist der Vater, gib also aus wer in die Queue gekommen ist und wieviele Leute drin sind */
+                sem_wait(shm_sem);
                 shar_mem->pid[i] =  f_pid;
+                sem_post(shm_sem);
                 printf("Parent: %d joined the queue, there are %d people in the queue\n",
                        f_pid, shar_mem->customers_in_queue);
             }
